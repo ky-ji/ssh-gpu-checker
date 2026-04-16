@@ -42,11 +42,11 @@ class MainTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir, redirect_stdout(buffer):
             config_path = Path(tmpdir) / "config"
             config_path.write_text("Host node-a\n", encoding="utf-8")
-            exit_code = main(["--config-path", str(config_path)])
+            exit_code = main(["--config-path", str(config_path), "--top", "1"])
 
         self.assertEqual(exit_code, 0)
+        self.assertIn("Recommended Hosts", buffer.getvalue())
         self.assertIn("node-a", buffer.getvalue())
-        self.assertIn("80896 MiB", buffer.getvalue())
 
     @patch("ssh_gpu_checker.cli.inspect_many_hosts")
     def test_main_prints_json_report(self, mock_inspect_many_hosts) -> None:
@@ -63,12 +63,13 @@ class MainTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir, redirect_stdout(buffer):
             config_path = Path(tmpdir) / "config"
             config_path.write_text("Host node-a\n", encoding="utf-8")
-            exit_code = main(["--config-path", str(config_path), "--json"])
+            exit_code = main(["--config-path", str(config_path), "--json", "--top", "1"])
 
         payload = json.loads(buffer.getvalue())
         self.assertEqual(exit_code, 0)
-        self.assertEqual(payload[0]["host"], "node-a")
-        self.assertEqual(payload[0]["gpus"][0]["free_memory_mb"], 80896)
+        self.assertEqual(payload["results"][0]["host"], "node-a")
+        self.assertEqual(payload["recommendations"][0]["host"], "node-a")
+        self.assertEqual(payload["recommendations"][0]["best_gpu_free_memory_mb"], 80896)
 
 
 if __name__ == "__main__":
