@@ -8,7 +8,7 @@ status: draft
 
 ## Goal
 
-Create a small Git-managed project at `/Users/jky/workspace/project` that can inspect SSH hosts defined by the user's SSH config and show per-host GPU availability in one command. The project should also expose that capability through a Codex skill so the same workflow can be triggered from natural language.
+Create a small Git-managed project at `/Users/jky/workspace/project/ssh-gpu-checker` that can inspect SSH hosts defined by the user's SSH config and show per-host GPU availability in one command. The project should also expose that capability through a Codex skill so the same workflow can be triggered from natural language.
 
 ## Context
 
@@ -34,7 +34,7 @@ A skill alone cannot be the durable implementation because the logic would live 
 
 ## Repository Shape
 
-The repository root will be `/Users/jky/workspace/project`.
+The repository root will be `/Users/jky/workspace/project/ssh-gpu-checker`.
 
 Planned structure:
 
@@ -135,6 +135,6 @@ Remote integration tests will be manual because they depend on live hosts and cr
 
 ## Open Questions Resolved
 
-- The repository should live directly at `/Users/jky/workspace/project`.
+- The repository should live directly at `/Users/jky/workspace/project/ssh-gpu-checker`.
 - The skill is a wrapper over code in the repository, not the primary implementation.
 - GitHub publication is part of the maintenance path, but the remote repository target can be decided after local implementation is complete.

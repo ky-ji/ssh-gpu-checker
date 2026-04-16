@@ -9,7 +9,7 @@ Run the repository tool instead of reimplementing SSH calls or GPU parsing insid
 
 ## Quick Reference
 
-- Repository root: `/Users/jky/workspace/project`
+- Repository root: `/Users/jky/workspace/project/ssh-gpu-checker`
 - All hosts: `bin/check-ssh-gpu`
 - Filter hosts: `bin/check-ssh-gpu --match THUSZ`
 - JSON output: `bin/check-ssh-gpu --json`
