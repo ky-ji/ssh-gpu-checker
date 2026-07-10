@@ -3,6 +3,13 @@ from typing import List, Optional
 
 
 @dataclass(frozen=True)
+class GpuProcessInfo:
+    pid: int
+    username: str
+    used_memory_mb: Optional[int]
+
+
+@dataclass(frozen=True)
 class GpuInfo:
     gpu_index: str
     name: str
@@ -10,6 +17,9 @@ class GpuInfo:
     used_memory_mb: int
     free_memory_mb: int
     utilization_gpu_percent: Optional[int]
+    uuid: Optional[str] = None
+    temperature_celsius: Optional[int] = None
+    processes: List[GpuProcessInfo] = field(default_factory=list)
 
 
 @dataclass(frozen=True)

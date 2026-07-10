@@ -1,6 +1,10 @@
 import unittest
 
-from ssh_gpu_checker.inspect import classify_ssh_failure, parse_nvidia_smi_csv
+from ssh_gpu_checker.inspect import (
+    classify_ssh_failure,
+    parse_nvidia_smi_csv,
+    parse_nvidia_smi_output,
+)
 
 
 class ParseNvidiaSmiCsvTests(unittest.TestCase):
@@ -18,6 +22,30 @@ class ParseNvidiaSmiCsvTests(unittest.TestCase):
             classify_ssh_failure(127, "bash: nvidia-smi: command not found"),
             "no_nvidia_smi",
         )
+
+    def test_parses_extended_gpu_and_process_rows(self) -> None:
+        output = """__GPU__
+0, GPU-abc, NVIDIA RTX 4090, 49140, 1024, [N/A], 42
+__PROC__
+GPU-abc, 1234, 768, alice
+"""
+        rows = parse_nvidia_smi_output(output)
+        self.assertEqual(rows[0].uuid, "GPU-abc")
+        self.assertEqual(rows[0].temperature_celsius, 42)
+        self.assertIsNone(rows[0].utilization_gpu_percent)
+        self.assertEqual(rows[0].processes[0].pid, 1234)
+        self.assertEqual(rows[0].processes[0].username, "alice")
+
+    def test_rejects_malformed_gpu_row(self) -> None:
+        with self.assertRaisesRegex(ValueError, "GPU row"):
+            parse_nvidia_smi_output("__GPU__\nnot,enough,fields\n__PROC__\n")
+
+    def test_rejects_malformed_process_row(self) -> None:
+        with self.assertRaisesRegex(ValueError, "process row"):
+            parse_nvidia_smi_output(
+                "__GPU__\n0,GPU-a,A100,1000,0,0,40\n"
+                "__PROC__\nGPU-a,1234\n"
+            )
 
 
 if __name__ == "__main__":
