@@ -76,6 +76,25 @@ class WebTests(unittest.TestCase):
 
         self.assertEqual(self.coordinator.stopped, 1)
 
+    def test_dashboard_and_assets_are_packaged(self) -> None:
+        page = self.client.get("/")
+        self.assertEqual(page.status_code, 200)
+        self.assertIn("SSH GPU Dashboard", page.text)
+        self.assertIn('/static/dashboard.js', page.text)
+
+        script = self.client.get("/static/dashboard.js")
+        self.assertEqual(script.status_code, 200)
+        self.assertIn("textContent", script.text)
+        self.assertNotIn("innerHTML", script.text)
+
+    def test_dashboard_has_no_external_runtime_dependencies(self) -> None:
+        page = self.client.get("/")
+        stylesheet = self.client.get("/static/dashboard.css")
+
+        self.assertNotIn("https://", page.text)
+        self.assertNotIn("http://", page.text)
+        self.assertNotIn("@import", stylesheet.text)
+
 
 if __name__ == "__main__":
     unittest.main()

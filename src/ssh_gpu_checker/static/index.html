@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'none'; connect-src 'self'; object-src 'none'; base-uri 'none'"
+    >
+    <title>SSH GPU Dashboard</title>
+    <link rel="stylesheet" href="/static/dashboard.css">
+    <script src="/static/dashboard.js" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <div>
+          <p class="eyebrow">Agentless cluster monitor</p>
+          <h1>SSH GPU Dashboard</h1>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <p id="connection-status" class="connection-status" role="status" aria-live="polite">
+          Connecting…
+        </p>
+        <button id="refresh-button" class="refresh-button" type="button">
+          Refresh now
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <section class="summary-section" aria-labelledby="summary-heading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Current capacity</p>
+            <h2 id="summary-heading">Cluster overview</h2>
+          </div>
+          <p id="freshness" class="freshness">Waiting for the first snapshot</p>
+        </div>
+        <div class="summary-grid">
+          <article class="summary-card summary-card-primary">
+            <span class="summary-label">Hosts online</span>
+            <strong id="hosts-online" class="summary-value">—</strong>
+            <span id="hosts-total" class="summary-detail">of — configured</span>
+          </article>
+          <article class="summary-card">
+            <span class="summary-label">GPUs visible</span>
+            <strong id="gpus-total" class="summary-value">—</strong>
+            <span class="summary-detail">latest retained data</span>
+          </article>
+          <article class="summary-card summary-card-good">
+            <span class="summary-label">GPUs idle</span>
+            <strong id="gpus-idle" class="summary-value">—</strong>
+            <span class="summary-detail">under 10% util &amp; memory</span>
+          </article>
+          <article class="summary-card summary-card-warn">
+            <span class="summary-label">Hosts stale</span>
+            <strong id="hosts-stale" class="summary-value">—</strong>
+            <span class="summary-detail">showing last good scan</span>
+          </article>
+        </div>
+      </section>
+
+      <section class="hosts-section" aria-labelledby="hosts-heading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Stable SSH config order</p>
+            <h2 id="hosts-heading">Hosts and GPUs</h2>
+          </div>
+          <p class="source-note">Source: system OpenSSH + nvidia-smi</p>
+        </div>
+        <div id="host-list" class="host-list" aria-live="polite">
+          <div class="initial-state">
+            <span class="loading-dot" aria-hidden="true"></span>
+            Waiting for GPU data…
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>Local-only dashboard · Healthy scans every 8 seconds by default</p>
+    </footer>
+  </body>
+</html>
