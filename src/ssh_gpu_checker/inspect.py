@@ -18,6 +18,7 @@ def parse_nvidia_smi_csv(output: str) -> List[GpuInfo]:
         index, name, total, used, utilization = [part.strip() for part in raw_line.split(',', 4)]
         total_mb = int(total)
         used_mb = int(used)
+        utilization_percent = None if utilization in {'[N/A]', 'N/A'} else int(utilization)
         gpus.append(
             GpuInfo(
                 gpu_index=index,
@@ -25,7 +26,7 @@ def parse_nvidia_smi_csv(output: str) -> List[GpuInfo]:
                 total_memory_mb=total_mb,
                 used_memory_mb=used_mb,
                 free_memory_mb=total_mb - used_mb,
-                utilization_gpu_percent=int(utilization),
+                utilization_gpu_percent=utilization_percent,
             )
         )
     return gpus

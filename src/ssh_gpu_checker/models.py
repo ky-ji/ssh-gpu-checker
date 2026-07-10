@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Optional
 
 
 @dataclass(frozen=True)
@@ -9,7 +9,7 @@ class GpuInfo:
     total_memory_mb: int
     used_memory_mb: int
     free_memory_mb: int
-    utilization_gpu_percent: int
+    utilization_gpu_percent: Optional[int]
 
 
 @dataclass(frozen=True)

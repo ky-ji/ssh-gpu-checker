@@ -9,6 +9,10 @@ class ParseNvidiaSmiCsvTests(unittest.TestCase):
         self.assertEqual(rows[0].free_memory_mb, 80896)
         self.assertEqual(rows[0].gpu_index, "0")
 
+    def test_parses_na_utilization_as_unknown(self) -> None:
+        rows = parse_nvidia_smi_csv("0, NVIDIA A100, 81920, 1024, [N/A]\n")
+        self.assertIsNone(rows[0].utilization_gpu_percent)
+
     def test_classifies_missing_binary(self) -> None:
         self.assertEqual(
             classify_ssh_failure(127, "bash: nvidia-smi: command not found"),
