@@ -1,5 +1,12 @@
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Optional
+
+
+@dataclass(frozen=True)
+class GpuProcessInfo:
+    pid: int
+    username: str
+    used_memory_mb: Optional[int]
 
 
 @dataclass(frozen=True)
@@ -9,7 +16,10 @@ class GpuInfo:
     total_memory_mb: int
     used_memory_mb: int
     free_memory_mb: int
-    utilization_gpu_percent: int
+    utilization_gpu_percent: Optional[int]
+    uuid: Optional[str] = None
+    temperature_celsius: Optional[int] = None
+    processes: List[GpuProcessInfo] = field(default_factory=list)
 
 
 @dataclass(frozen=True)

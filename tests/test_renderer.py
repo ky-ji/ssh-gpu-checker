@@ -47,6 +47,19 @@ class RenderReportTests(unittest.TestCase):
         self.assertIn("1. node-a", output)
         self.assertIn("best GPU free 46068 MiB", output)
 
+    def test_renders_unknown_utilization_as_na(self) -> None:
+        result = HostInspectionResult(
+            host="node-a",
+            status="ok",
+            gpus=[GpuInfo("0", "A100", 81920, 1024, 80896, None)],
+            message="",
+        )
+
+        output = render_report([result])
+
+        self.assertIn("util N/A", output)
+        self.assertNotIn("None%", output)
+
 
 if __name__ == "__main__":
     unittest.main()

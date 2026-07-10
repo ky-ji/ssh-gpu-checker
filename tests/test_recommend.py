@@ -53,6 +53,18 @@ class BuildHostRecommendationsTests(unittest.TestCase):
 
         self.assertEqual([item.host for item in recommendations], ["strong"])
 
+    def test_treats_unknown_utilization_as_busy_for_max_util_filter(self) -> None:
+        unknown = HostInspectionResult(
+            host="unknown",
+            status="ok",
+            gpus=[GpuInfo("0", "A100", 81920, 1024, 80896, None)],
+            message="",
+        )
+
+        recommendations = build_host_recommendations([unknown], max_util=20)
+
+        self.assertEqual(recommendations, [])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -12,8 +12,20 @@ class HostRecommendation:
     best_gpu_name: str
     best_gpu_free_memory_mb: int
     best_gpu_total_memory_mb: int
-    best_gpu_utilization_percent: int
+    best_gpu_utilization_percent: Optional[int]
     reason: str
+
+
+def _utilization_for_scoring(gpu: GpuInfo) -> int:
+    if gpu.utilization_gpu_percent is None:
+        return 100
+    return max(0, min(gpu.utilization_gpu_percent, 100))
+
+
+def _format_utilization(utilization: Optional[int]) -> str:
+    if utilization is None:
+        return 'N/A'
+    return f'{utilization}%'
 
 
 def _gpu_score(gpu: GpuInfo, max_free_memory_mb: int) -> float:
@@ -24,7 +36,7 @@ def _gpu_score(gpu: GpuInfo, max_free_memory_mb: int) -> float:
     free_ratio_score = 0.0
     if gpu.total_memory_mb > 0:
         free_ratio_score = gpu.free_memory_mb / float(gpu.total_memory_mb)
-    utilization = max(0, min(gpu.utilization_gpu_percent, 100))
+    utilization = _utilization_for_scoring(gpu)
     idle_score = (100.0 - utilization) / 100.0
     return 100.0 * ((0.6 * free_memory_score) + (0.2 * free_ratio_score) + (0.2 * idle_score))
 
@@ -47,7 +59,7 @@ def build_host_recommendations(
         best_gpu = max(result.gpus, key=lambda gpu: _gpu_score(gpu, max_free_memory_mb))
         if best_gpu.free_memory_mb < min_free_mb:
             continue
-        if best_gpu.utilization_gpu_percent > max_util:
+        if _utilization_for_scoring(best_gpu) > max_util:
             continue
         score = _gpu_score(best_gpu, max_free_memory_mb)
         recommendations.append(
@@ -61,22 +73,37 @@ def build_host_recommendations(
                 best_gpu_utilization_percent=best_gpu.utilization_gpu_percent,
                 reason=(
                     f'best GPU free {best_gpu.free_memory_mb} MiB, '
-                    f'util {best_gpu.utilization_gpu_percent}%'
+                    f'util {_format_utilization(best_gpu.utilization_gpu_percent)}'
                 ),
             )
         )
 
     if sort_by == 'free':
         recommendations.sort(
-            key=lambda item: (-item.best_gpu_free_memory_mb, item.best_gpu_utilization_percent, -item.score, item.host)
+            key=lambda item: (
+                -item.best_gpu_free_memory_mb,
+                100 if item.best_gpu_utilization_percent is None else item.best_gpu_utilization_percent,
+                -item.score,
+                item.host,
+            )
         )
     elif sort_by == 'util':
         recommendations.sort(
-            key=lambda item: (item.best_gpu_utilization_percent, -item.best_gpu_free_memory_mb, -item.score, item.host)
+            key=lambda item: (
+                100 if item.best_gpu_utilization_percent is None else item.best_gpu_utilization_percent,
+                -item.best_gpu_free_memory_mb,
+                -item.score,
+                item.host,
+            )
         )
     else:
         recommendations.sort(
-            key=lambda item: (-item.score, -item.best_gpu_free_memory_mb, item.best_gpu_utilization_percent, item.host)
+            key=lambda item: (
+                -item.score,
+                -item.best_gpu_free_memory_mb,
+                100 if item.best_gpu_utilization_percent is None else item.best_gpu_utilization_percent,
+                item.host,
+            )
         )
 
     if top is not None and top >= 0:

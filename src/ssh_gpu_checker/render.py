@@ -4,6 +4,12 @@ from ssh_gpu_checker.models import HostInspectionResult
 from ssh_gpu_checker.recommend import HostRecommendation
 
 
+def _format_utilization(utilization: object) -> str:
+    if utilization is None:
+        return "N/A"
+    return f"{utilization}%"
+
+
 def render_report(
     results: List[HostInspectionResult],
     recommendations: Optional[List[HostRecommendation]] = None,
@@ -35,6 +41,6 @@ def render_report(
         lines.append(f"[{result.host}] {result.status}")
         for gpu in result.gpus:
             lines.append(
-                f"  GPU {gpu.gpu_index} | {gpu.name} | free {gpu.free_memory_mb} MiB / {gpu.total_memory_mb} MiB | util {gpu.utilization_gpu_percent}%"
+                f"  GPU {gpu.gpu_index} | {gpu.name} | free {gpu.free_memory_mb} MiB / {gpu.total_memory_mb} MiB | util {_format_utilization(gpu.utilization_gpu_percent)}"
             )
     return "\n".join(lines)
