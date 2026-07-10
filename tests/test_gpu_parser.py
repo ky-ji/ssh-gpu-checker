@@ -47,6 +47,17 @@ GPU-abc, 1234, 768, alice
                 "__PROC__\nGPU-a,1234\n"
             )
 
+    def test_treats_bracketed_gpu_status_as_unknown_metric(self) -> None:
+        rows = parse_nvidia_smi_output(
+            "__GPU__\n"
+            "3,GPU-reset,NVIDIA RTX 4090,49140,1,[N/A],[GPU requires reset]\n"
+            "__PROC__\n"
+        )
+
+        self.assertEqual(len(rows), 1)
+        self.assertIsNone(rows[0].utilization_gpu_percent)
+        self.assertIsNone(rows[0].temperature_celsius)
+
 
 if __name__ == "__main__":
     unittest.main()

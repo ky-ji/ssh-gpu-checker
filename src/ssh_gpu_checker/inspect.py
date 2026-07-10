@@ -32,7 +32,10 @@ REMOTE_QUERY = (
 
 def _optional_int(value: str) -> Optional[int]:
     normalized = value.strip()
-    if normalized in {"", "N/A", "[N/A]"}:
+    if (
+        normalized in {"", "N/A", "[N/A]"}
+        or normalized.startswith("[") and normalized.endswith("]")
+    ):
         return None
     return int(normalized)
 
