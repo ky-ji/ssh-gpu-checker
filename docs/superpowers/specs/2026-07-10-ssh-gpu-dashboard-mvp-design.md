@@ -8,14 +8,14 @@ status: approved
 
 ## Goal
 
-Extend SSH GPU Checker with a lightweight local web dashboard that shows current NVIDIA GPU availability across an allowlisted subset of SSH aliases.
+Extend SSH GPU Checker with a lightweight local web dashboard that shows current NVIDIA GPU availability across explicit SSH aliases, with optional glob filtering.
 
 The dashboard must remain agentless: remote servers only need SSH access and `nvidia-smi`. It must reuse the system OpenSSH client so the user's existing host-key checks, keys, ports, aliases, and jump-host behavior continue to work. The first version is a live status viewer, not a general observability platform.
 
 ## Confirmed Product Decisions
 
 - Access is local and single-user. The service binds to `127.0.0.1` by default and has no account system.
-- Host aliases come from the existing SSH config and are restricted by a startup allowlist pattern such as `THUSZ*`.
+- Host aliases come from the existing SSH config. By default all explicit aliases are shown; optional startup patterns such as `THUSZ*` restrict the set.
 - Healthy hosts should update approximately every 5–10 seconds; the default interval is 8 seconds.
 - Failed hosts use exponential retry delays of 15, 30, then 60 seconds.
 - The web MVP shows cluster totals, host status, per-GPU utilization, memory, temperature, and process ownership.
@@ -90,11 +90,14 @@ The browser never starts SSH commands directly. HTTP requests read the latest in
 
 The dashboard defaults to `~/.ssh/config`, with the existing `--config-path` override retained. It extracts only explicit `Host` aliases and ignores wildcard, negated, and catch-all entries.
 
-The dashboard requires at least one shell-style `--match` glob or equivalent configured allowlist. This flag belongs to the new dashboard entrypoint; the existing CLI keeps its current substring matching semantics. For example:
+The dashboard uses all discovered explicit aliases when `--match` is omitted. One or more shell-style `--match` globs can restrict the dashboard to selected aliases. This flag belongs to the new dashboard entrypoint; the existing CLI keeps its current substring matching semantics. For example:
 
 ```bash
+bin/ssh-gpu-dashboard
 bin/ssh-gpu-dashboard --match 'THUSZ*'
 ```
+
+Matching is case-insensitive and multiple patterns can be supplied. The resolved alias list is stable and follows SSH config order. The dashboard fails fast if SSH discovery produces zero hosts or explicit patterns match zero hosts.
 
 The web API cannot add hosts, choose a config path, change SSH usernames, or submit arbitrary remote commands. Once an alias is selected, OpenSSH resolves `HostName`, `User`, `Port`, `IdentityFile`, `ProxyJump`, `Include`, and other connection options when the collector invokes `ssh <alias>`.
 
@@ -216,10 +219,10 @@ FastAPI and Uvicorn are normal project dependencies so installation remains one 
 The repository-local workflow is:
 
 ```bash
-bin/ssh-gpu-dashboard --match 'THUSZ*'
+bin/ssh-gpu-dashboard
 ```
 
-The command prints the loopback URL and supports `--config-path`, `--match`, `--interval`, `--timeout`, `--workers`, `--host`, and `--port`. `--host` rejects non-loopback values in the MVP.
+The command prints the loopback URL and supports `--config-path`, optional repeatable `--match`, `--interval`, `--timeout`, `--workers`, `--host`, and `--port`. `--host` rejects non-loopback values in the MVP.
 
 The existing `bin/check-ssh-gpu` command continues to work as before.
 
@@ -242,6 +245,7 @@ The current 18 tests remain part of the full suite. Test-only HTTP client depend
 
 ## Acceptance Criteria
 
+- Omitting `--match` scans every explicit alias discovered in the selected SSH config.
 - `--match 'THUSZ*'` scans only matching explicit aliases.
 - The first successful host appears within 10 seconds of opening the page when at least one host is reachable.
 - Healthy-host data refreshes every 5–10 seconds under normal network conditions.
