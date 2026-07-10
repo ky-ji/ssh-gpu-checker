@@ -62,6 +62,12 @@ def gpu_is_idle(gpu: GpuInfo) -> bool:
     )
 
 
+def _serialize_gpu(gpu: GpuInfo) -> Dict[str, object]:
+    payload = asdict(gpu)
+    payload["index"] = payload.pop("gpu_index")
+    return payload
+
+
 def serialize_snapshot(
     states: Sequence[HostState], active: bool, generated_at: datetime
 ) -> Dict[str, object]:
@@ -74,7 +80,7 @@ def serialize_snapshot(
             "last_success_at": _iso(state.last_success_at),
             "stale": state.stale,
             "next_retry_seconds": state.next_retry_seconds,
-            "gpus": [asdict(gpu) for gpu in state.gpus],
+            "gpus": [_serialize_gpu(gpu) for gpu in state.gpus],
         }
         for state in states
     ]

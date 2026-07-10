@@ -46,6 +46,7 @@ class WebTests(unittest.TestCase):
         good = self.client.post("/api/v1/refresh", json={})
 
         self.assertEqual(good.status_code, 202)
+        self.assertEqual(good.json(), {"accepted": True})
         self.assertEqual(self.coordinator.refreshed, 1)
 
     def test_refresh_rejects_invalid_json(self) -> None:
@@ -86,6 +87,9 @@ class WebTests(unittest.TestCase):
         self.assertEqual(script.status_code, 200)
         self.assertIn("textContent", script.text)
         self.assertNotIn("innerHTML", script.text)
+        self.assertIn("next_retry_seconds", script.text)
+        self.assertIn('metric("Free"', script.text)
+        self.assertIn('metric("Total"', script.text)
 
     def test_dashboard_has_no_external_runtime_dependencies(self) -> None:
         page = self.client.get("/")

@@ -31,6 +31,8 @@ class SnapshotTests(unittest.TestCase):
         self.assertEqual(payload["summary"]["hosts_online"], 1)
         self.assertEqual(payload["summary"]["gpus_idle"], 1)
         self.assertTrue(payload["hosts"][0]["stale"])
+        self.assertEqual(payload["hosts"][0]["gpus"][0]["index"], "0")
+        self.assertNotIn("gpu_index", payload["hosts"][0]["gpus"][0])
         self.assertEqual(
             payload["hosts"][0]["gpus"][0]["processes"][0]["username"],
             "alice",

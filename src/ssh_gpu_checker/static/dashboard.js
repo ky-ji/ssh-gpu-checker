@@ -109,7 +109,7 @@
     const state = gpuState(gpu);
     const card = node("article", `gpu-card gpu-${state}`);
     const header = node("div", "gpu-header");
-    header.append(node("span", "gpu-index", `GPU ${gpu.gpu_index ?? "?"}`));
+    header.append(node("span", "gpu-index", `GPU ${gpu.index ?? "?"}`));
     header.append(node("span", `gpu-state ${state}`, stateLabel(state)));
     card.append(header);
     card.append(node("p", "gpu-name", gpu.name || "Unknown NVIDIA GPU"));
@@ -122,7 +122,8 @@
       ? `${gpu.temperature_celsius}°C`
       : "N/A";
     metrics.append(metric("Util", utilization));
-    metrics.append(metric("Used", memoryLabel(gpu.used_memory_mb)));
+    metrics.append(metric("Free", memoryLabel(gpu.free_memory_mb)));
+    metrics.append(metric("Total", memoryLabel(gpu.total_memory_mb)));
     metrics.append(metric("Temp", temperature));
     card.append(metrics);
 
@@ -166,9 +167,13 @@
     if (host.stale) {
       meta.append(node("span", "stale-badge", "Stale data"));
     }
-    const timing = status === "ok"
+    let timing = status === "ok"
       ? `Updated ${shortTime(host.last_success_at)}`
       : `Last success ${shortTime(host.last_success_at)}`;
+    const isFailure = !["ok", "pending", "scanning"].includes(status);
+    if (isFailure && Number.isFinite(host.next_retry_seconds) && host.next_retry_seconds > 0) {
+      timing += ` · Retry in ${host.next_retry_seconds}s`;
+    }
     meta.append(node("span", "host-timing", timing));
     header.append(meta);
     strip.append(header);

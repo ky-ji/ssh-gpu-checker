@@ -65,7 +65,7 @@ def create_app(coordinator: ScanCoordinator) -> FastAPI:
                 {"detail": "JSON body must be an object"}, status_code=400
             )
         coordinator.request_refresh()
-        return JSONResponse({"status": "refresh_requested"}, status_code=202)
+        return JSONResponse({"accepted": True}, status_code=202)
 
     @app.get("/healthz")
     async def healthz():
