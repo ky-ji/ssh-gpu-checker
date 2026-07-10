@@ -1,7 +1,7 @@
 import argparse
 import math
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import List, Optional, Sequence
 
 import uvicorn
 
@@ -18,8 +18,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--match",
         action="append",
-        required=True,
-        help="allowlisted SSH alias glob; repeat for more patterns",
+        help="optional SSH alias glob; repeat for more patterns",
     )
     parser.add_argument("--interval", type=float, default=8.0)
     parser.add_argument("--timeout", type=int, default=8)
@@ -35,6 +34,14 @@ def validate_loopback_host(value: str) -> str:
             "dashboard host must be loopback-only: use 127.0.0.1 or localhost"
         )
     return value
+
+
+def select_dashboard_hosts(
+    hosts: Sequence[str], patterns: Optional[Sequence[str]]
+) -> List[str]:
+    if not patterns:
+        return list(hosts)
+    return filter_hosts_by_globs(hosts, patterns)
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
@@ -62,9 +69,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         configured_hosts = load_hosts(config_path, None)
     except OSError as exc:
         parser.error(f"could not read SSH config: {exc}")
-    selected_hosts = filter_hosts_by_globs(configured_hosts, args.match)
+    selected_hosts = select_dashboard_hosts(configured_hosts, args.match)
     if not selected_hosts:
-        parser.error("host allowlist matched no SSH aliases")
+        parser.error("no SSH aliases were selected")
 
     coordinator = ScanCoordinator(
         selected_hosts,

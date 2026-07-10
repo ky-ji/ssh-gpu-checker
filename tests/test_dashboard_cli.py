@@ -1,7 +1,11 @@
 import unittest
 
 from ssh_gpu_checker.config import filter_hosts_by_globs
-from ssh_gpu_checker.dashboard_cli import build_parser, validate_loopback_host
+from ssh_gpu_checker.dashboard_cli import (
+    build_parser,
+    select_dashboard_hosts,
+    validate_loopback_host,
+)
 
 
 class DashboardAllowlistTests(unittest.TestCase):
@@ -11,15 +15,26 @@ class DashboardAllowlistTests(unittest.TestCase):
 
 
 class DashboardCliTests(unittest.TestCase):
-    def test_requires_match_pattern(self) -> None:
-        with self.assertRaises(SystemExit):
-            build_parser().parse_args([])
+    def test_match_pattern_is_optional(self) -> None:
+        args = build_parser().parse_args([])
+        self.assertIsNone(args.match)
 
     def test_collects_repeatable_match_patterns(self) -> None:
         args = build_parser().parse_args(
             ["--match", "THUSZ*", "--match", "lab-gpu-?"]
         )
         self.assertEqual(args.match, ["THUSZ*", "lab-gpu-?"])
+
+    def test_uses_all_hosts_without_match_patterns(self) -> None:
+        hosts = ["alpha", "THUSZgnode1", "beta"]
+        self.assertEqual(select_dashboard_hosts(hosts, None), hosts)
+
+    def test_filters_hosts_when_match_patterns_are_present(self) -> None:
+        hosts = ["alpha", "THUSZgnode1", "THUSZgnode2"]
+        self.assertEqual(
+            select_dashboard_hosts(hosts, ["THUSZ*2"]),
+            ["THUSZgnode2"],
+        )
 
     def test_rejects_non_loopback_bind(self) -> None:
         with self.assertRaisesRegex(ValueError, "loopback"):

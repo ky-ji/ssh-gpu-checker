@@ -6,24 +6,25 @@ host recommendations.
 
 ## Web dashboard
 
-Install the project and launch the dashboard with at least one allowlist glob:
+Install the project and launch the dashboard:
 
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install -e .
-bin/ssh-gpu-dashboard --match 'THUSZ*'
+bin/ssh-gpu-dashboard
 ```
 
-Open `http://127.0.0.1:8848`. Repeat `--match` to include multiple alias groups:
+Open `http://127.0.0.1:8848`. Without `--match`, every explicit alias from the
+selected SSH config is displayed. Use one or more patterns to restrict the set:
 
 ```bash
 bin/ssh-gpu-dashboard --match 'THUSZ*' --match 'lab-gpu-?'
 ```
 
-The allowlist matches aliases parsed from `~/.ssh/config`, or from files inside
-`~/.ssh/configs` when that directory exists. Matching is case-insensitive and
-uses shell-style `*` and `?` globs. The dashboard refuses to start if no glob is
-provided or no alias matches.
+Aliases are parsed from `~/.ssh/config`, or from files inside `~/.ssh/configs`
+when that directory exists. Optional matching is case-insensitive and uses
+shell-style `*` and `?` globs. The dashboard refuses to start if discovery
+produces no aliases or explicit patterns match none.
 
 The server binds only to `127.0.0.1` by default and rejects non-loopback bind
 addresses. It has no CORS support, remote access, authentication, or TLS because
@@ -43,7 +44,7 @@ it is intentionally a local tool.
 Useful dashboard flags:
 
 - `--config-path PATH`: use a specific SSH config file or directory
-- `--match GLOB`: allowlist aliases; required and repeatable
+- `--match GLOB`: optionally filter aliases; repeatable
 - `--interval SECONDS`: healthy scan interval, minimum 5, default 8
 - `--timeout SECONDS`: SSH connection timeout, default 8
 - `--workers N`: maximum simultaneous host scans, default 8
