@@ -1,7 +1,11 @@
+import os
+import subprocess
+import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
-from ssh_gpu_checker.inspect import build_ssh_command, inspect_host
+from ssh_gpu_checker.inspect import PROCESS_QUERY, build_ssh_command, inspect_host
 
 
 class BuildSshCommandTests(unittest.TestCase):
@@ -14,6 +18,8 @@ class BuildSshCommandTests(unittest.TestCase):
         self.assertIn("uuid", command[-1])
         self.assertIn("temperature.gpu", command[-1])
         self.assertIn("query-compute-apps", command[-1])
+        self.assertEqual(command[-1].count("ps -eo pid=,user="), 1)
+        self.assertNotIn("ps -o user= -p", command[-1])
         self.assertNotIn("node-a", command[-1])
 
     @patch("ssh_gpu_checker.inspect.subprocess.run")
@@ -54,6 +60,52 @@ class BuildSshCommandTests(unittest.TestCase):
         result = inspect_host("node-a", timeout=5)
 
         self.assertEqual(result.status, "error")
+
+
+class ProcessQueryTests(unittest.TestCase):
+    def test_uses_one_process_snapshot_for_repeated_gpu_pids(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            bin_dir = Path(temp_dir)
+            calls_path = bin_dir / "ps-calls"
+            nvidia_smi = bin_dir / "nvidia-smi"
+            nvidia_smi.write_text(
+                "#!/bin/sh\n"
+                "printf '%s\\n' "
+                "'GPU-a, 42, 100' "
+                "'GPU-b, 42, 200' "
+                "'GPU-b, 84, 300' "
+                "'GPU-c, 999, 400'\n"
+            )
+            nvidia_smi.chmod(0o755)
+            ps = bin_dir / "ps"
+            ps.write_text(
+                "#!/bin/sh\n"
+                "printf 'called\\n' >> \"$PS_CALLS_PATH\"\n"
+                "printf '%s\\n' '  42 alice' '  84 bob'\n"
+            )
+            ps.chmod(0o755)
+            env = os.environ.copy()
+            env["PATH"] = f"{bin_dir}:{env['PATH']}"
+            env["PS_CALLS_PATH"] = str(calls_path)
+
+            completed = subprocess.run(
+                ["sh", "-c", PROCESS_QUERY],
+                capture_output=True,
+                text=True,
+                check=True,
+                env=env,
+            )
+
+            self.assertEqual(
+                completed.stdout.splitlines(),
+                [
+                    "GPU-a,42,100,alice",
+                    "GPU-b,42,200,alice",
+                    "GPU-b,84,300,bob",
+                    "GPU-c,999,400,unknown",
+                ],
+            )
+            self.assertEqual(calls_path.read_text().splitlines(), ["called"])
 
 
 if __name__ == "__main__":
